@@ -1,0 +1,67 @@
+image: golang:1.11-stretch
+
+variables:
+  REPO_NAME: github.com/ernoaapa/linuxkit-packages
+
+stages:
+- build
+- publish
+
+before_script:
+  - go version
+
+  # Move project under $GOPATH
+  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+  - cd $GOPATH/src/$REPO_NAME
+
+  # Configure Docker
+  - ./build/install-docker.sh
+  - echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
+
+  # install jq
+  - apt-get update && apt-get install -y jq
+
+# BUILD
+build:
+  stage: build
+  tags:
+    - arm64
+  script:
+    - ./build/install-build-tools.sh
+    - |
+      cd pkg
+      make forcebuild
+
+# PUBLISH
+.publish: &publish
+  stage: publish
+  script:
+    - ./build/install-build-tools.sh
+    - echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
+    - |
+      cd pkg
+      make forcepush
+
+publish:arm64:
+  <<: *publish
+  tags:
+    - arm64
+  variables:
+    GOARCH: arm64
+
+publish:armv6:
+  <<: *publish
+  tags:
+    - armv6
+  variables:
+    GOARCH: arm
+    GOARM: "6"
+
+publish:armv7:
+  <<: *publish
+  tags:
+    - armv7
+  variables:
+    GOARCH: arm
+    GOARM: "7"

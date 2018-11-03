@@ -1,0 +1,6 @@
+org: ernoaapa
+image: rsync
+gitrepo: https://github.com/ernoaapa/linuxkit-packages
+arches:
+  - arm64
+  - amd64

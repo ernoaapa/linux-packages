@@ -1,0 +1,50 @@
+defaults: &defaults
+  docker:
+    - image: circleci/golang:1.11
+  working_directory: /go/src/github.com/ernoaapa/linuxkit-packages
+
+version: 2
+jobs:
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run: ./build/install-build-tools.sh
+
+      - run:
+          name: Build linuxkit package images
+          command: |
+            cd pkg
+            make forcebuild
+
+  publish:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run: ./build/install-build-tools.sh
+
+      - run:
+          name: Login Docker hub
+          command: echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
+    
+      - run:
+          name: Build & push linuxkit package images
+          command: |
+            cd pkg
+            make forcepush
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - test
+
+      - publish:
+          requires:
+            - test

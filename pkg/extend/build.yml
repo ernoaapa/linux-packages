@@ -1,0 +1,15 @@
+org: ernoaapa
+image: extend
+gitrepo: https://github.com/ernoaapa/linuxkit-packages
+arches:
+  - arm
+  - arm64
+  - amd64
+config:
+  binds:
+  - "/dev:/dev"
+  capabilities:
+  - CAP_SYS_ADMIN
+  - CAP_MKNOD
+  net: new
+  ipc: new
