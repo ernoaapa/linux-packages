@@ -1,6 +1,6 @@
 org: ernoaapa
 image: extend
-gitrepo: https://github.com/ernoaapa/linuxkit-packages
+gitrepo: https://github.com/ernoaapa/linux-packages
 arches:
   - arm
   - arm64

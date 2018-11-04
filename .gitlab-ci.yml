@@ -1,7 +1,7 @@
 image: golang:1.11-stretch
 
 variables:
-  REPO_NAME: github.com/ernoaapa/linuxkit-packages
+  REPO_NAME: github.com/ernoaapa/linux-packages
 
 stages:
 - build
@@ -28,19 +28,19 @@ build:
   tags:
     - arm64
   script:
-    - ./build/install-build-tools.sh
+    - ./linuxkit/bin/install-tools.sh
     - |
-      cd pkg
+      cd linuxkit/pkg
       make forcebuild
 
 # PUBLISH
 .publish: &publish
   stage: publish
   script:
-    - ./build/install-build-tools.sh
+    - ./linuxkit/bin/install-tools.sh
     - echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
     - |
-      cd pkg
+      cd linuxkit/pkg
       make forcepush
 
 publish:arm64:

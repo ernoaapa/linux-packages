@@ -1,7 +1,7 @@
 defaults: &defaults
   docker:
     - image: circleci/golang:1.11
-  working_directory: /go/src/github.com/ernoaapa/linuxkit-packages
+  working_directory: /go/src/github.com/ernoaapa/linux-packages
 
 version: 2
 jobs:
@@ -12,12 +12,12 @@ jobs:
 
       - setup_remote_docker
 
-      - run: ./build/install-build-tools.sh
+      - run: ./linuxkit/bin/install-tools.sh
 
       - run:
           name: Build linuxkit package images
           command: |
-            cd pkg
+            cd linuxkit/pkg
             make forcebuild
 
   publish:
@@ -27,16 +27,16 @@ jobs:
 
       - setup_remote_docker
 
-      - run: ./build/install-build-tools.sh
-
       - run:
           name: Login Docker hub
           command: echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
     
+      - run: ./linuxkit/bin/install-tools.sh
+
       - run:
           name: Build & push linuxkit package images
           command: |
-            cd pkg
+            cd linuxkit/pkg
             make forcepush
 
 workflows:
