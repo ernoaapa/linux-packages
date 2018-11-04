@@ -5,7 +5,7 @@ defaults: &defaults
 
 version: 2
 jobs:
-  test:
+  linuxkit_test:
     <<: *defaults
     steps:
       - checkout
@@ -20,7 +20,7 @@ jobs:
             cd linuxkit/pkg
             make forcebuild
 
-  publish:
+  linuxkit_publish:
     <<: *defaults
     steps:
       - checkout
@@ -39,12 +39,41 @@ jobs:
             cd linuxkit/pkg
             make forcepush
 
+  packages_test:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - run: ./packages/bin/install-tools.sh
+
+      - run:
+          name: build & release Linux packages
+          command: GOOS=linux GOARCH=amd64 ./packages/build-all.sh
+
+  packages_publish:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - run: ./packages/bin/install-tools.sh
+
+      - run:
+          name: build & release Linux packages
+          command: GOOS=linux GOARCH=amd64 ./packages/publish-all.sh
+
 workflows:
   version: 2
-  build_and_test:
+  linuxkit-build-and-publish:
     jobs:
-      - test
+      - linuxkit_test
 
-      - publish:
+      - linuxkit_publish:
           requires:
-            - test
+            - linuxkit_test
+
+  packages-build-and-publish:
+    jobs:
+      - packages_test
+      - packages_publish:
+          requires:
+            - packages_test
