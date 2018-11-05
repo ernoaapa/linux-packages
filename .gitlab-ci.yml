@@ -1,7 +1,7 @@
 image: golang:1.11-stretch
 
 variables:
-  REPO_NAME: github.com/ernoaapa/linuxkit-packages
+  REPO_NAME: github.com/ernoaapa/linux-packages
 
 stages:
 - build
@@ -16,50 +16,94 @@ before_script:
   - cd $GOPATH/src/$REPO_NAME
 
   # Configure Docker
-  - ./build/install-docker.sh
+  - ./bin/install-docker.sh
   - echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
 
   # install jq
   - apt-get update && apt-get install -y jq
 
-# BUILD
-build:
+# BUILD LINUXKIT
+build:linuxkit:
   stage: build
   tags:
     - arm64
   script:
-    - ./build/install-build-tools.sh
+    - ./linuxkit/bin/install-tools.sh
     - |
-      cd pkg
+      cd linuxkit/pkg
       make forcebuild
 
-# PUBLISH
-.publish: &publish
+# PUBLISH LINUXKIT
+.publish_linuxkit: &publish_linuxkit
   stage: publish
   script:
-    - ./build/install-build-tools.sh
+    - ./linuxkit/bin/install-tools.sh
     - echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
     - |
-      cd pkg
+      cd linuxkit/pkg
       make forcepush
 
-publish:arm64:
-  <<: *publish
+publish:linuxkit:arm64:
+  <<: *publish_linuxkit
   tags:
     - arm64
   variables:
     GOARCH: arm64
 
-publish:armv6:
-  <<: *publish
+publish:linuxkit:armv6:
+  <<: *publish_linuxkit
   tags:
     - armv6
   variables:
     GOARCH: arm
     GOARM: "6"
 
-publish:armv7:
-  <<: *publish
+publish:linuxkit:armv7:
+  <<: *publish_linuxkit
+  tags:
+    - armv7
+  variables:
+    GOARCH: arm
+    GOARM: "7"
+
+# BUILD PACKAGES
+build:packages:
+  stage: build
+  tags:
+    - arm64
+  variables:
+    GOARCH: arm64
+  script:
+    - ./packages/bin/install-tools.sh
+    - ./packages/build-all.sh
+
+# PUBLISH PACKAGES
+.publish_packages: &publish_packages
+  stage: publish
+  script:
+    - ./packages/bin/install-tools.sh
+    - ./packages/publish-all.sh
+  artifacts:
+    paths:
+    - dist/
+
+publish:packages:arm64:
+  <<: *publish_packages
+  tags:
+    - arm64
+  variables:
+    GOARCH: arm64
+
+publish:packages:armv6:
+  <<: *publish_packages
+  tags:
+    - armv6
+  variables:
+    GOARCH: arm
+    GOARM: "6"
+
+publish:packages:armv7:
+  <<: *publish_packages
   tags:
     - armv7
   variables:

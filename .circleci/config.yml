@@ -1,50 +1,79 @@
 defaults: &defaults
   docker:
     - image: circleci/golang:1.11
-  working_directory: /go/src/github.com/ernoaapa/linuxkit-packages
+  working_directory: /go/src/github.com/ernoaapa/linux-packages
 
 version: 2
 jobs:
-  test:
+  linuxkit_test:
     <<: *defaults
     steps:
       - checkout
 
       - setup_remote_docker
 
-      - run: ./build/install-build-tools.sh
+      - run: ./linuxkit/bin/install-tools.sh
 
       - run:
           name: Build linuxkit package images
           command: |
-            cd pkg
+            cd linuxkit/pkg
             make forcebuild
 
-  publish:
+  linuxkit_publish:
     <<: *defaults
     steps:
       - checkout
 
       - setup_remote_docker
-
-      - run: ./build/install-build-tools.sh
 
       - run:
           name: Login Docker hub
           command: echo $DOCKER_PASS | docker login --username $DOCKER_USER --password-stdin
     
+      - run: ./linuxkit/bin/install-tools.sh
+
       - run:
           name: Build & push linuxkit package images
           command: |
-            cd pkg
+            cd linuxkit/pkg
             make forcepush
+
+  packages_test:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - run: ./packages/bin/install-tools.sh
+
+      - run:
+          name: build & release Linux packages
+          command: GOOS=linux GOARCH=amd64 ./packages/build-all.sh
+
+  packages_publish:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - run: ./packages/bin/install-tools.sh
+
+      - run:
+          name: build & release Linux packages
+          command: GOOS=linux GOARCH=amd64 ./packages/publish-all.sh
 
 workflows:
   version: 2
-  build_and_test:
+  linuxkit-build-and-publish:
     jobs:
-      - test
+      - linuxkit_test
 
-      - publish:
+      - linuxkit_publish:
           requires:
-            - test
+            - linuxkit_test
+
+  packages-build-and-publish:
+    jobs:
+      - packages_test
+      - packages_publish:
+          requires:
+            - packages_test
